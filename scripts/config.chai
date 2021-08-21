@@ -1,0 +1,5 @@
+//config["regexptokenfilter"]="^.*BTCUSDT|ETHUSDT$"
+config["regexptokenfilter"]="^.*USDT$";
+//config["regexptokenfilter"]="^(ETC|BT|SOL).*$";
+config["tradingagainst"]="USDT";
+config["maxdisplayedvalues"]="1000"; // do not go too high
