@@ -80,8 +80,7 @@ void DataGraphicDisplayer::displayDataTable(entityx::EntityManager &es)
 
                 std::string tokenWithoutAgainst = std::get<0>(displayTuple);
 
-                if ((mRegexpFilter.empty()||std::regex_match(tokenWithoutAgainst, std::regex(mRegexpFilter)))&&(!mFilterByKeyWord ||
-                    mFilterByKeyWord && Utils::setContains(mTrendingTokens, tokenWithoutAgainst)))
+                if(Utils::isTokenSelected(mRegexpFilter,mFilterByKeyWord,tokenWithoutAgainst,mTrendingTokens))
                 {
 
                     double acc = std::get<2>(displayTuple);
@@ -153,8 +152,7 @@ void DataGraphicDisplayer::displayGraphs(entityx::EntityManager& es)
             std::string tokenWithoutAgainst = tokenWithHistory.first;
             Utils::eraseSubstring(tokenWithoutAgainst,Utils::config["tradingagainst"]);
 
-            if((mRegexpFilter.empty()||std::regex_match(tokenWithoutAgainst, std::regex(mRegexpFilter)))&&
-            !mFilterByKeyWord||mFilterByKeyWord&&Utils::setContains(mTrendingTokens,tokenWithoutAgainst)) {
+            if(Utils::isTokenSelected(mRegexpFilter,mFilterByKeyWord,tokenWithoutAgainst,mTrendingTokens)) {
 
                 auto vectorPrice = tokenWithHistory.second;
                 std::vector<double> vectorX;
@@ -230,7 +228,7 @@ void DataGraphicDisplayer::displaySearch(entityx::EntityManager& entityManager, 
     ImGui::Begin("Search");
     ImGui::Text("Search Regexp :");
 
-    if (ImGui::InputText("", &mRegexpFilter,mFilterByKeyWord?ImGuiInputTextFlags_ReadOnly:ImGuiInputTextFlags_None))
+    if (ImGui::InputText("", &mRegexpFilter/*,mFilterByKeyWord?ImGuiInputTextFlags_ReadOnly:ImGuiInputTextFlags_None*/))
     {
         events.emit<FilterByRegexpEnteredEvent>(mRegexpFilter);
     }

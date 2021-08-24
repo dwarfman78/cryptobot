@@ -37,6 +37,28 @@ public:
 
         return returnValue;
     }
+    static bool isTokenSelected(const std::string& filterRegexp, const bool filterByKeyword, const std::string& token, const std::set<std::pair<unsigned int, std::string>,TrendingTokenComp>& keyWords)
+    {
+        bool retour{filterRegexp.empty()&&!filterByKeyword};
+
+        if (!filterRegexp.empty())
+        {
+            try
+            {
+                retour = std::regex_match(token, std::regex(filterRegexp));
+            }
+            catch(const std::regex_error& regexError)
+            {
+                std::cout << "Invalid regexp : " << regexError.what() << std::endl;
+            }
+        }
+        if(filterByKeyword)
+        {
+            retour = retour || Utils::setContains(keyWords, token);
+        }
+
+        return retour;
+    }
     static std::map<std::string,std::string> config;
 };
 #endif //CRYPTOBOT_UTILS_HPP
