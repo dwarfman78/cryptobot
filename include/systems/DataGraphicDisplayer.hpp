@@ -23,13 +23,19 @@ private:
 
     void displayDataTable(entityx::EntityManager &es);
 
-    void displayOptions(entityx::EntityManager &es) const;
+    void displayOptions(entityx::EntityManager &es, entityx::EventManager &events) const;
 
     void displaySearch(entityx::EntityManager &entityManager, entityx::EventManager &events);
+
+    void displayLinearRegression(std::vector<double>& vectorX, std::pair<double,double>& pairAB, unsigned int offset, unsigned int vectorPriceSize);
 
     static bool mFilterByKeyWord;
 
     static bool mShowOnlyAccPos;
+
+    static bool mCalculateLinearRegression;
+
+    static bool mCalculateMinAndMax;
 
     std::vector<std::tuple<std::string,double,double,ImVec4,ImVec4>> mDisplayVector;
 

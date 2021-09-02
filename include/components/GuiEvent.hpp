@@ -8,7 +8,9 @@
 enum GuiEventType
 {
     FILTER_BY_KEYWORD,
-    FILTER_BY_REGEXP
+    FILTER_BY_REGEXP,
+    CALCULATE_LINEARREG,
+    CALCULATE_MINMAX
 };
 template<GuiEventType EventType,class EventValueType>
 struct GuiEvent
@@ -19,5 +21,7 @@ struct GuiEvent
 };
 using FilterByKeywordClickedEvent = GuiEvent<GuiEventType::FILTER_BY_KEYWORD,bool>;
 using FilterByRegexpEnteredEvent = GuiEvent<GuiEventType::FILTER_BY_REGEXP,std::string>;
+using CalculateLinearRegressionEvent = GuiEvent<GuiEventType::CALCULATE_LINEARREG,bool>;
+using CalculateMinMaxEvent = GuiEvent<GuiEventType::CALCULATE_MINMAX,bool>;
 
 #endif //CRYPTOBOT_GUIEVENT_HPP
