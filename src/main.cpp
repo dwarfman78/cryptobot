@@ -1,10 +1,10 @@
 #include "../include/Application.hpp"
 
-int main() {
+int main(int argc, char** argv) {
 
-    Application application;
+    Application application(argc,argv);
 
     application.start();
 
-    return 0;
+    return EXIT_SUCCESS;
 }

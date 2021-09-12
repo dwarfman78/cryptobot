@@ -82,6 +82,21 @@ public:
 
         return retour;
     }
+    static void splitDataInTwoVectors(const std::vector<std::pair<double,double>>& source, std::vector<double>& first, std::vector<double>& second,unsigned int begin, unsigned int size)
+    {
+        if(begin+size<=source.size())
+        {
+            first.resize(size);
+            second.resize(size);
+
+            auto&& beginIt = source.begin()+begin;
+            auto&& endIt = beginIt+size;
+
+            std::transform(beginIt,endIt,first.begin(),[](std::pair<double,double>pair)->double{return pair.first;});
+            std::transform(beginIt,endIt,second.begin(),[](std::pair<double,double>pair)->double{return pair.second;});
+        }
+
+    }
     static std::map<std::string,std::string> config;
 };
 #endif //CRYPTOBOT_UTILS_HPP

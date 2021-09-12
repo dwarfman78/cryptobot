@@ -18,7 +18,12 @@ struct Data
 
     std::map<std::string,std::vector<std::pair<double,double>>> byTokenName;
     std::map<std::string,std::vector<std::pair<double,double>>> linearRegressionByTokenName;
+    std::map<std::string,std::vector<std::pair<double,double>>> hisLinearRegression;
+    std::map<std::string,std::vector<std::pair<double,double>>> lowsLinearRegression;
     std::map<std::string,std::vector<std::pair<double,double>>> movingAverageByTokenName;
+    std::map<std::string,std::vector<std::pair<double,double>>> lowsByTokenName;
+    std::map<std::string,std::vector<std::pair<double,double>>> hisByTokenName;
+    std::map<std::string,std::vector<std::pair<double,double>>> trendingChangeByTokenName;
     std::map<std::string,std::vector<std::pair<double,double>>> supportMaxByTokenName;
     std::map<std::string,std::vector<std::pair<double,double>>> supportMinByTokenName;
 

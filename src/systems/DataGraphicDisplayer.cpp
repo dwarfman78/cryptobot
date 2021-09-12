@@ -172,16 +172,20 @@ void DataGraphicDisplayer::displayGraphs(entityx::EntityManager& es)
             std::string tokenWithoutAgainst = tokenWithHistory.first;
             Utils::eraseSubstring(tokenWithoutAgainst,Utils::config["tradingagainst"]);
 
-            if(Utils::isTokenSelected(mRegexpFilter,mFilterByKeyWord,tokenWithoutAgainst,mTrendingTokens)) {
+            if(Utils::isTokenSelected(mRegexpFilter,mFilterByKeyWord,tokenWithoutAgainst,mTrendingTokens)) 
+            {
+                auto& vectorPrice = tokenWithHistory.second;
 
-                auto vectorPrice = tokenWithHistory.second;
-                std::vector<double> vectorX;
-                vectorX.resize(vectorPrice.size());
-                std::transform(vectorPrice.begin(),vectorPrice.end(),vectorX.begin(),[](std::pair<double,double> p)->double{return p.first;});
+                const unsigned int maxSize = std::stoi(Utils::config["maxdisplayedvalues"]);
+                int offset = vectorPrice.size() - maxSize;
+                if(offset<0)
+                {
+                    offset=0;
+                }
 
-                std::vector<double> vectorY;
-                vectorY.resize(vectorPrice.size());
-                std::transform(vectorPrice.begin(),vectorPrice.end(),vectorY.begin(),[](std::pair<double,double> p)->double{return p.second;});
+                std::vector<double> vectorX, vectorY;
+                Utils::splitDataInTwoVectors(vectorPrice,vectorX,vectorY,offset,vectorPrice.size()-offset);
+                unsigned int vSize = vectorX.size();
 
                 auto tokenName = tokenWithHistory.first.c_str();
                 std::pair<double,double> pairAB{0.0f,0.0f};
@@ -192,30 +196,35 @@ void DataGraphicDisplayer::displayGraphs(entityx::EntityManager& es)
                 }
                 if(!mShowOnlyAccPos||mShowOnlyAccPos&&pairAB.first > 0) 
                 {
-                    const unsigned int maxSize = std::stoi(Utils::config["maxdisplayedvalues"]);
-                    int offset = vectorX.size() - maxSize;
-                    if(offset<0)
-                    {
-                        offset=0;
-                    }
-
                     double yMaxValue = *std::max_element(vectorY.begin(),vectorY.end());
-                    ImPlot::SetNextPlotLimits(offset, vectorX.size()+2, yMaxValue - (yMaxValue*0.2f), yMaxValue + (yMaxValue*0.2f));
+                    ImPlot::SetNextPlotLimits(offset, vSize+2, yMaxValue - (yMaxValue*0.2f), yMaxValue + (yMaxValue*0.2f));
 
                     if (ImPlot::BeginPlot(tokenName)) 
                     {
 
-                        ImPlot::PlotScatter("Price", &vectorX[0+offset], &vectorY[0+offset], vectorPrice.size()-offset);
+                        ImPlot::PlotScatter("Price", &vectorX[0], &vectorY[0], vSize);
 
                         if(mCalculateLinearRegression)
                         {
-                            displayLinearRegression(vectorX,pairAB,offset,vectorPrice.size());
+                            displayLinearRegression(vectorX,pairAB);
+
+                            auto& hisLinearRegressions = data.hisLinearRegression[tokenName];
+                            auto& lowsLinearRegressions = data.lowsLinearRegression[tokenName];
+                            
+                            if(hisLinearRegressions.size()>0&&lowsLinearRegressions.size()>0)
+                            {
+                                auto& pairABHis = hisLinearRegressions.back();
+                                auto& pairABLows = lowsLinearRegressions.back();
+                                
+                                displayLinearRegression(vectorX,pairABHis);
+                                displayLinearRegression(vectorX,pairABLows);
+                            }
                         }
 
                         if(mCalculateMinAndMax)
                         {
                             std::vector<double> yMaxSupport;
-                            yMaxSupport.resize(vectorX.size());
+                            yMaxSupport.resize(vSize);
                             if(!data.supportMaxByTokenName[tokenName].empty())
                             {
                                 auto &pairABSupportMax = data.supportMaxByTokenName[tokenName].back();
@@ -227,11 +236,11 @@ void DataGraphicDisplayer::displayGraphs(entityx::EntityManager& es)
                                             [&](double x) -> double {
                                                 return pairABSupportMax.first * x + pairABSupportMax.second;
                                             });
-                                ImPlot::PlotLine(plotNameMax.c_str(), &vectorX[0 + offset], &yMaxSupport[0 + offset],
-                                                vectorPrice.size() - offset);
+                                ImPlot::PlotLine(plotNameMax.c_str(), &vectorX[0], &yMaxSupport[0],
+                                                vSize);
 
                                 std::vector<double> yMinSupport;
-                                yMinSupport.resize(vectorX.size());
+                                yMinSupport.resize(vSize);
                                 auto &pairABSupportMin = data.supportMinByTokenName[tokenName].back();
                                 std::string plotNameMin{
                                         "MIN(Y = " + std::to_string(pairABSupportMin.first) + " X + " +
@@ -241,23 +250,20 @@ void DataGraphicDisplayer::displayGraphs(entityx::EntityManager& es)
                                             [&](double x) -> double {
                                                 return pairABSupportMin.first * x + pairABSupportMin.second;
                                             });
-                                ImPlot::PlotLine(plotNameMin.c_str(), &vectorX[0 + offset], &yMinSupport[0 + offset],
-                                                vectorPrice.size() - offset);
+                                ImPlot::PlotLine(plotNameMin.c_str(), &vectorX[0], &yMinSupport[0],
+                                                vSize);
                             }
                         }
 
                         auto& vectorMovingAverage = data.movingAverageByTokenName[tokenName];
                         std::vector<double> vectorMovingX, vectorMovingY;
-                        unsigned int size = vectorMovingAverage.size();
-                        vectorMovingX.resize(size);
-                        vectorMovingY.resize(size);
 
-                        std::transform(vectorMovingAverage.begin(),vectorMovingAverage.end(),vectorMovingX.begin(),[](std::pair<double,double> p){return p.first;});
+                        Utils::splitDataInTwoVectors(vectorMovingAverage,vectorMovingX,vectorMovingY,0,vectorMovingAverage.size());
+                        ImPlot::PlotLine("Average",&vectorMovingX[0+offset],&vectorMovingY[0+offset],vectorMovingAverage.size()-offset);
 
-                        std::transform(vectorMovingAverage.begin(),vectorMovingAverage.end(),vectorMovingY.begin(),[](std::pair<double,double> p){return p.second;});
-
-                        ImPlot::PlotLine("Average",&vectorMovingX[0+offset],&vectorMovingY[0+offset],vectorMovingAverage.size());
-
+                        displayHiLows(data,tokenName,offset);
+                        displayTrendingChanges(data,tokenName,offset);
+                        
                         ImPlot::EndPlot();
                     }
                 }
@@ -266,7 +272,58 @@ void DataGraphicDisplayer::displayGraphs(entityx::EntityManager& es)
     });
     ImGui::End();
 }
-void DataGraphicDisplayer::displayLinearRegression(std::vector<double>& vectorX, std::pair<double,double>& pairAB, unsigned int offset, unsigned int vectorPriceSize)
+void DataGraphicDisplayer::displayHiLows(Data& data,const std::string& symbol,unsigned int offset) const
+{
+    auto& his = data.hisByTokenName[symbol];
+
+    std::vector<double> vectorX, vectorY;
+
+    Utils::splitDataInTwoVectors(his,vectorX,vectorY,0,his.size());
+
+    vectorX.erase(std::remove_if(vectorX.begin(),vectorX.end(),[offset](auto& element){return element<offset;}),vectorX.end());
+
+    int i = vectorY.size()-vectorX.size();
+
+    vectorY.erase(std::remove_if(vectorY.begin(),vectorY.end(),[&i](auto& element){return i-->0;}),vectorY.end());
+    ImPlot::PlotScatter("His", &vectorX[0], &vectorY[0], vectorX.size());
+    
+
+    auto& lows = data.lowsByTokenName[symbol];
+
+    std::vector<double> vectorXLows, vectorYLows;
+
+    Utils::splitDataInTwoVectors(lows,vectorXLows,vectorYLows,0,lows.size());
+
+    vectorXLows.erase(std::remove_if(vectorXLows.begin(),vectorXLows.end(),[offset](auto& element){return element<offset;}),vectorXLows.end());
+
+    int j = vectorYLows.size()-vectorXLows.size();
+
+    vectorYLows.erase(std::remove_if(vectorYLows.begin(),vectorYLows.end(),[&j](auto& element){return j-->0;}),vectorYLows.end());
+    ImPlot::PlotScatter("Lows", &vectorXLows[0], &vectorYLows[0], vectorXLows.size());
+
+}
+void DataGraphicDisplayer::displayTrendingChanges(Data& data, const std::string& symbol, unsigned int offset) const
+{
+    std::vector<double> vectorX,vectorY;
+    auto& marks = data.trendingChangeByTokenName[symbol];
+
+    for(auto& mark : marks)
+    {
+        if(mark.first>=offset)
+        {
+            vectorX.push_back(mark.first);
+            /*vectorY.push_back(mark.second);
+
+            vectorX.push_back(mark.first);
+            vectorY.push_back(mark.second);*/
+        }
+    }
+    ImPlot::PlotVLines("Trending", &vectorX[0],vectorX.size());
+    
+    
+
+}
+void DataGraphicDisplayer::displayLinearRegression(std::vector<double>& vectorX, std::pair<double,double>& pairAB)
 {
     std::vector<double> yLinear;
     yLinear.resize(vectorX.size());
@@ -274,12 +331,16 @@ void DataGraphicDisplayer::displayLinearRegression(std::vector<double>& vectorX,
     std::transform(vectorX.begin(), vectorX.end(), yLinear.begin(), [&](double x) -> double {
         return pairAB.first * x + pairAB.second;
     });
+
+    // TODO : prolongate
+
     std::string plotName{
             "R(Y = " + std::to_string(pairAB.first) + " X + " + std::to_string(pairAB.second) +
             ")"};
     ImPlot::PushStyleColor(ImPlotColormap_Plasma, 1);
-    ImPlot::PlotLine(plotName.c_str(), &vectorX[0+offset], &yLinear[0+offset], vectorPriceSize-offset);
+    ImPlot::PlotLine(plotName.c_str(), &vectorX[0], &yLinear[0], vectorX.size());
     ImPlot::PopStyleColor();
+
 }
 void DataGraphicDisplayer::displaySearch(entityx::EntityManager& entityManager, entityx::EventManager& events)
 {

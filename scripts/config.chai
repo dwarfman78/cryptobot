@@ -1,5 +1,12 @@
-//config["regexptokenfilter"]="^.*BTCUSDT|ETHUSDT$"
+//This is the main regexp filter for tokens
 config["regexptokenfilter"]="^.*USDT$";
-//config["regexptokenfilter"]="^(ETC|BT|SOL).*$";
+
+//This is the string that will be removed from the token at the end of it in the display list
 config["tradingagainst"]="USDT";
+
+//Max number of values to be displayed, there's a bug that limits the number of points that can be
+//displayed.
 config["maxdisplayedvalues"]="1000"; // do not go too high
+
+//Number of values used in the linear regressions for the his/lows detection.
+config["hilowscycles"]="10";

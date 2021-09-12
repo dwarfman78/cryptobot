@@ -27,8 +27,12 @@ private:
 
     void displaySearch(entityx::EntityManager &entityManager, entityx::EventManager &events);
 
-    void displayLinearRegression(std::vector<double>& vectorX, std::pair<double,double>& pairAB, unsigned int offset, unsigned int vectorPriceSize);
+    void displayLinearRegression(std::vector<double>& vectorX, std::pair<double,double>& pairAB);
 
+    void displayHiLows(Data& data, const std::string& symbol, unsigned int offset) const;
+    
+    void displayTrendingChanges(Data& data, const std::string& symbol, unsigned int offset) const;
+    
     static bool mFilterByKeyWord;
 
     static bool mShowOnlyAccPos;
